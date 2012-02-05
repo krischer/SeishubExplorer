@@ -197,7 +197,7 @@ class Seishub(object):
         endtime are returned.
 
         Adapted from obspyck
-        
+
         :param starttime: Start datetime as UTCDateTime
         :param endtime: End datetime as UTCDateTime
         """
@@ -207,7 +207,7 @@ class Seishub(object):
         # - last pick of event must be after stream starttime
         # thus we get any event with at least one pick in between start/endtime
         url = self.server + "/seismology/event/getList?" + \
-            "min_last_pick=%s&max_first_pick=%s" % \
+            "min_last_pick=%s&max_first_pick=%s&limit=2500" % \
             (str(starttime), str(endtime))
         req = urllib2.Request(url)
         auth = base64.encodestring('%s:%s' % (self.env.seishub_user,

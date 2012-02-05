@@ -220,7 +220,13 @@ class EventDB(object):
             print '%s is not a valid event file.' % event
             return
         # Get the event id.
-        event_id = root.xpath('event_id/value')[0].text
+        # XXX: Some events imported from seiscomp 3 have a slightly different
+        # structure.
+        try:
+            event_id = root.xpath('event_id/value')[0].text
+        except:
+            event_id = root.xpath('event_id')[0].text
+
         # Create dictionary that will later be used to create the database
         # entry.
         event_dict = {'event_file': filename,
