@@ -308,18 +308,45 @@ class EventDB(object):
         for pick in picks:
             pick_dict = {'event_id': event_id}
             chan_id = pick.xpath('waveform')[0]
-            # XXX: Other way??
+
             def get_id(id_type):
                 return chan_id.values()[chan_id.keys().index(id_type)]
+
             try:
                 pick_dict['network'] = get_id('networkCode')
+            except:
+                print 'Problem with parsing the pick network in event %s' % event_id
+                print '\tNot all picks for the event will be displayed.'
+                continue
+
+            try:
                 pick_dict['station'] = get_id('stationCode')
+            except:
+                print 'Problem with parsing the pick station in event %s' % event_id
+                print '\tNot all picks for the event will be displayed.'
+                continue
+
+            try:
                 pick_dict['location'] = get_id('locationCode')
+            except:
+                print 'Problem with parsing the pick location in event %s' % event_id
+                print '\tNot all picks for the event will be displayed.'
+                continue
+
+            # Channel not necessarily given. Set to '*' in case it cannot be
+            # read.
+            try:
                 pick_dict['channel'] = get_id('channelCode')
+            except ValueError:
+                pick_dict['channel'] = '*'
+
+            try:
                 pick_dict['time'] = pick.xpath('time/value')[0].text
             except:
-                print 'Problem with %s' % event_id
+                print 'Problem with parsing the pick time in event %s' % event_id
+                print '\tNot all picks for the event will be displayed.'
                 continue
+
             # Account for weird ids.
             if not pick_dict['network']:
                 pick_dict['network'] = 'BW'
