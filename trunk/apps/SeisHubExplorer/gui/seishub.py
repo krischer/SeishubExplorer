@@ -257,3 +257,16 @@ class Seishub(object):
             file = StringIO(e.read())
             self.env.db.addEventFile(file, event[1], event[0])
             e.close()
+
+    def downloadEventsForCurrentTimeFrame(self, starttime, endtime):
+        """
+        Downloads all events for the current timeframe on screen plus 50% to
+        the right and 50% to the left.
+        """
+        self.env.splash.show()
+        timerange = endtime - starttime
+        starttime -= timerange / 2.0
+        endtime += timerange / 2.0
+        self.updateEventListFromSeishub(starttime, endtime)
+        self.downloadAndParseEvents()
+        self.env.splash.close()

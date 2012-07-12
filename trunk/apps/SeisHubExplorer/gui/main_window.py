@@ -96,16 +96,27 @@ class MainWindow(QtGui.QWidget):
         self.horizontalChannelListLayout.setMargin(0)
         self.channelListFrame.setLayout(self.horizontalChannelListLayout)
         self.editChannelListsButton = QtGui.QPushButton('Edit Groups')
+        self.loadEventsButton = QtGui.QPushButton('Load events')
         spacerItem = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding,
                                         QtGui.QSizePolicy.Minimum)
+        self.horizontalChannelListLayout.addWidget(self.loadEventsButton)
         self.horizontalChannelListLayout.addItem(spacerItem)
         self.horizontalChannelListLayout.addWidget(self.editChannelListsButton)
         grid.addWidget(self.channelListFrame, 11, 8, 1, 2)
         QtCore.QObject.connect(self.editChannelListsButton, QtCore.SIGNAL("clicked()"),
                                self.callEditChannelListDialog)
+        QtCore.QObject.connect(self.loadEventsButton, QtCore.SIGNAL("clicked()"),
+                               self.loadEvents)
 
         # Set the layout and therefore display everything.
         self.setLayout(grid)
+
+    def loadEvents(self):
+        """
+        """
+        self.env.seishub.downloadEventsForCurrentTimeFrame(self.env.starttime,
+                self.env.endtime)
+        self.waveforms.redraw()
 
     def callEditChannelListDialog(self):
         dialog = EditChannelListsDialog(self.env)
