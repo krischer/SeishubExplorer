@@ -504,7 +504,8 @@ class Waveforms(QtGui.QFrame):
         self.layout.addWidget(self.waveform_view)
         # Setup both scenes.
         self.timescale_scene = TimescaleScene(self.env)
-        self.waveform_scene = WaveformScene(self.env)
+        self.waveform_scene = WaveformScene(self.env,
+                                            plot_height=self.env.plot_height)
         # Give both the scene and the view access to each other.
         self.timescale_view.scene = self.timescale_scene
         self.waveform_view.scene = self.waveform_scene

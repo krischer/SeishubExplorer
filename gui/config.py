@@ -142,14 +142,14 @@ class DBConfigParser(RawConfigParser):
                  value_type='int',
                  comment='Buffer in days before and after the shown plots when requesting from Seishub')
         # Log scale of the plots.
-        self.getOrSetDefault('Appearance', 'Log Scale', 'log_scale', False,
-                 value_type='boolean',
-                 comment='Plots have a log scale True/False')
+#        self.getOrSetDefault('Appearance', 'Log Scale', 'log_scale', False,
+#                 value_type='boolean',
+#                 comment='Plots have a log scale True/False')
         # To help determine the maximum zoom level.
         self.getOrSetDefault('General Settings', 'Preview delta',
                  'preview_delta', 30.0, value_type='float',
                  comment='The sample spacing in seconds of the preview files that are received from Seishub. This is dynamically adjusted once the first file has been requested but it is needed to set a maximum zoom level before any file has been requested.')
-        # Add picker settings. 
+        # Add picker settings.
         self.getOrSetDefault('Picker',
                  'System call command',
                  'picker_command', 'obspyck.py -t $starttime$ -d $duration$ -i $channels$',
