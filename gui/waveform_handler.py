@@ -143,7 +143,7 @@ class WaveformHandler(object):
                 if not stream:
                     msg = 'No data available for %s.%s.%s.%s for the selected timeframes'\
                         % (network, station, location, channel)
-                    self.win.status_bar.setError(msg)
+                    print msg
                     return
             else:
                 if self.env.debug:
