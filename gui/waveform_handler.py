@@ -24,7 +24,7 @@ class WaveformHandler(object):
         directory and otherwise fetch it from a SeisHub Server. It will always
         return one stream object for one channel with the as many items as
         self.env.details.
-        
+
         The cache directory has the following structure:
 
         cache
@@ -177,6 +177,8 @@ class WaveformHandler(object):
         for frame in frames:
             temp = self.env.seishub.getPreview(network, station, location,
                         channel, UTCDateTime(frame[0]), UTCDateTime(frame[1]))
+            if not temp:
+                continue
             # XXX: Not necessary in the future once SeisHub updates itsself.
             temp[0].stats.preview = True
             start = temp[0].stats.starttime
