@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from lxml.etree import parse
-from obspy.core import UTCDateTime
+from obspy import UTCDateTime, readEvents
 import os
 import sqlite3
 
@@ -212,20 +211,14 @@ class EventDB(object):
                                           SeisHub server.
         """
         # Parse the StringIO.
-        tree = parse(file)
-        # Get root element.
-        root = tree.getroot()
-        # Discard wrong xml file.
-        if root.tag != 'event':
-            print '%s is not a valid event file.' % event
-            return
+        cat = readEvents(file)
+        event = cat[0]
+        origin = event.origins and event.origins[0] or None
+        magnitude = event.magnitudes and event.magnitudes[0] or None
         # Get the event id.
         # XXX: Some events imported from seiscomp 3 have a slightly different
         # structure.
-        try:
-            event_id = root.xpath('event_id/value')[0].text
-        except:
-            event_id = root.xpath('event_id')[0].text
+        event_id = str(event.resource_id)
 
         # Create dictionary that will later be used to create the database
         # entry.
@@ -237,97 +230,98 @@ class EventDB(object):
         # Parse XML and write event dictionary. Use try/except blocks for all
         # optional tags.
         # XXX: Better way than try/except?
-        event_dict['event_type'] = root.xpath('event_type/value')[0].text
+        event_dict['event_type'] = event.event_type
         try:
-            event_dict['user'] = root.xpath('event_type/user')[0].text
-        except: pass
+            event_dict['user'] = event.creation_info.author
+        except:
+            pass
         try:
-            event_dict['puplic'] = root.xpath('event_type/puplic')[0].text
-        except: pass
+            event_dict['public'] = event.extra.public["value"]
+        except:
+            pass
         try:
-            event_dict['origin_time'] = \
-                    str(UTCDateTime(root.xpath('origin/time/value')[0].text))
+            event_dict['origin_time'] = str(origin.time)
         except:
             pass
         try:
             event_dict['origin_time_uncertainty'] = \
-                    UTCDateTime(root.xpath('origin/time/uncertainty')[0].text)
-        except: pass
+                origin.time_errors.uncertainty
+        except:
+            pass
         try:
-            event_dict['origin_latitude'] = \
-                    float(root.xpath('origin/latitude/value')[0].text)
-        except: pass
+            event_dict['origin_latitude'] = origin.latitude
+        except:
+            pass
         try:
             event_dict['origin_latitude_uncertainty'] = \
-                    float(root.xpath('origin/latitude/uncertainty')[0].text)
-        except: pass
+                origin.latitude_errors.uncertainty
+        except:
+            pass
         try:
-            event_dict['origin_longitude'] = \
-                    float(root.xpath('origin/longitude/value')[0].text)
-        except: pass
+            event_dict['origin_longitude'] = origin.longitude
+        except:
+            pass
         try:
             event_dict['origin_longitude_uncertainty'] = \
-                    float(root.xpath('origin/longitude/uncertainty')[0].text)
-        except: pass
+                origin.longitude.uncertainty
+        except:
+            pass
         try:
-            event_dict['origin_depth'] = \
-                    float(root.xpath('origin/depth/value')[0].text)
-        except: pass
+            event_dict['origin_depth'] = origin.depth
+        except:
+            pass
         try:
             event_dict['origin_depth_uncertainty'] = \
-                    float(root.xpath('origin/depth/uncertainty')[0].text)
-        except: pass
+                origin.depth_errors.uncertainty
+        except:
+            pass
         try:
-            event_dict['origin_depth_type'] = \
-                    root.xpath('origin/depth_type')[0].text
-        except: pass
+            event_dict['origin_depth_type'] = origin.depth_type
+        except:
+            pass
         try:
-            event_dict['origin_earth_mod'] = \
-                    root.xpath('origin/earth_mod')[0].text
-        except: pass
+            event_dict['origin_earth_mod'] = str(origin.earth_model_id)
+        except:
+            pass
         try:
-            event_dict['magnitude'] = \
-                    float(root.xpath('magnitude/mag/value')[0].text)
-        except: pass
+            event_dict['magnitude'] = magnitude.mag
+        except:
+            pass
         try:
             event_dict['magnitude_uncertainty'] = \
-                    float(root.xpath('magnitude/mag/uncertainty')[0].text)
-        except: pass
+                magnitude.mag_errors.uncertainty
+        except:
+            pass
         try:
-            event_dict['magnitude_program'] = \
-                    root.xpath('magnitude/program')[0].text
-        except: pass
+            event_dict['magnitude_program'] = str(magnitude.method_id)
+        except:
+            pass
         try:
-            event_dict['magnitude_type'] = \
-                    root.xpath('magnitude/type')[0].text
-        except: pass
+            event_dict['magnitude_type'] = magnitude.magnitude_type
+        except:
+            pass
         # Write event.
         self.writeToDB('events', event_dict)
         # Loop over all picks.
-        picks = root.xpath('pick')
-        for pick in picks:
+        for p in event.picks:
             pick_dict = {'event_id': event_id}
-            chan_id = pick.xpath('waveform')[0]
-
-            def get_id(id_type):
-                return chan_id.values()[chan_id.keys().index(id_type)]
 
             try:
-                pick_dict['network'] = get_id('networkCode')
+                pick_dict['network'] = p.waveform_id.network_code
             except:
                 print 'Problem with parsing the pick network in event %s' % event_id
                 print '\tNot all picks for the event will be displayed.'
                 continue
 
             try:
-                pick_dict['station'] = get_id('stationCode')
+                pick_dict['station'] = p.waveform_id.station_code
             except:
                 print 'Problem with parsing the pick station in event %s' % event_id
                 print '\tNot all picks for the event will be displayed.'
                 continue
 
             try:
-                pick_dict['location'] = get_id('locationCode')
+                pick_dict['location'] = p.waveform_id.location_code
             except:
                 print 'Problem with parsing the pick location in event %s' % event_id
                 print '\tNot all picks for the event will be displayed.'
@@ -336,12 +330,12 @@ class EventDB(object):
             # Channel not necessarily given. Set to '*' in case it cannot be
             # read.
             try:
-                pick_dict['channel'] = get_id('channelCode')
+                pick_dict['channel'] = p.waveform_id.channel_code
             except ValueError:
                 pick_dict['channel'] = '*'
 
             try:
-                pick_dict['time'] = pick.xpath('time/value')[0].text
+                pick_dict['time'] = p.time
             except:
                 print 'Problem with parsing the pick time in event %s' % event_id
                 print '\tNot all picks for the event will be displayed.'
@@ -355,18 +349,23 @@ class EventDB(object):
                 pick_dict['location'] = ''
                 pick_dict['channel'] = 'EHZ'
             try:
-                pick_dict['time_uncertainty'] = pick.xpath('time/uncertainty')[0].text
-            except: pass
-            pick_dict['phaseHint'] = pick.xpath('phaseHint')[0].text
+                pick_dict['time_uncertainty'] = p.time_errors.uncertainty
+            except:
+                pass
+            pick_dict['phaseHint'] = p.phase_hint
             try:
-                pick_dict['onset'] = pick.xpath('onset')[0].text
-            except: pass
+                pick_dict['onset'] = p.onset
+            except:
+                pass
             try:
-                pick_dict['polarity'] = pick.xpath('polarity')[0].text
-            except: pass
-            try:
-                pick_dict['weight'] = float(pick.xpath('weight')[0].text)
-            except: pass
+                pick_dict['polarity'] = p.polarity
+            except:
+                pass
+            # more complicated to get the weight from the corresponding arrival,
+            # just ignore for now..
+            #try:
+            #    pick_dict['weight'] = float(pick.xpath('weight')[0].text)
+            #except: pass
             # Write to database.
             self.writeToDB('picks', pick_dict)
         self.db.commit()
@@ -387,9 +386,8 @@ class EventDB(object):
         if table_name not in self.tables:
             raise
         keys = '(%s)' % ','.join(table_dict.keys())
-        values = '(%s)' % ','.join([("'%s'" % _i if type(_i) == str or \
-                                    _i is None else \
-                                     str(_i)) for _i in table_dict.values()])
+        values = '(%s)' % ','.join(["'%s'" % str(_i)
+                                    for _i in table_dict.values()])
         sql_com = '''INSERT INTO %s %s VALUES %s''' % (table_name, keys, values)
         self.c.execute(sql_com)
 
