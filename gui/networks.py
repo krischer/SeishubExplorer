@@ -214,7 +214,7 @@ class TreeModel(QtCore.QAbstractItemModel):
         """
         Reads the dictionary and fills the Tree.
         """
-        networks = self.networks.keys()
+        networks = map(str, self.networks.keys())
         networks.sort()
         # Loop over all networks.
         for network in networks:
@@ -223,7 +223,7 @@ class TreeModel(QtCore.QAbstractItemModel):
             # Get the child as shortcut.
             nw_child = parent.child(parent.childCount() - 1)
             nw_dict = self.networks[network]
-            stations = nw_dict.keys()
+            stations = map(str, nw_dict.keys())
             stations.sort()
             # Loop over all stations.
             for station in stations:
@@ -238,7 +238,7 @@ class TreeModel(QtCore.QAbstractItemModel):
                 #New cur_child.
                 st_child = nw_child.child(nw_child.childCount() - 1)
                 st_dict = nw_dict[station]
-                locations = st_dict.keys()
+                locations = map(str, st_dict.keys())
                 locations.sort()
                 # Loop over all locations.
                 for location in locations:
