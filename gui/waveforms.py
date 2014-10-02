@@ -97,7 +97,7 @@ class PreviewPlot(QtGui.QGraphicsItemGroup):
                         self.y_start + 1, self.x_start + x,
                         self.y_start + self.plot_height - 1, self)
                 self.events.append(line)
-                if pick['event_type'] == 'automatic':
+                if pick['evaluation_mode'] == 'automatic':
                     if 'p' in pick['phaseHint'].lower():
                         line.setPen(QtGui.QColor(255, 0, 0, 200))
                     else:

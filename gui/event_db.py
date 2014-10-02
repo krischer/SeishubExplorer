@@ -103,7 +103,7 @@ class EventDB(object):
                       'phaseHint': result[2], 'polarity': result[3],
                       'magnitude': event['magnitude'],
                       'magnitude_type': event['magnitude_type'],
-                      'event_type' : event['event_type']}
+                      'evaluation_mode' : event['evaluation_mode']}
             result_dicts.append(r_dict)
         return result_dicts
 
@@ -118,7 +118,7 @@ class EventDB(object):
         starttime = str(starttime)
         endtime = str(endtime)
         msg = '''SELECT event_id, event_type, magnitude, origin_time,
-                 origin_latitude, origin_longitude FROM events
+                 origin_latitude, origin_longitude, evaluation_mode, public, author FROM events
                  WHERE origin_time > "%s" and origin_time < "%s"''' % \
                          (starttime, endtime)
         self.c.execute(msg)
@@ -131,7 +131,10 @@ class EventDB(object):
              'magnitude': event[2],
              'origin_time': UTCDateTime(event[3]),
              'origin_latitude': event[4],
-             'origin_longitude': event[5] })
+             'origin_longitude': event[5],
+             'evaluation_mode': event[6],
+             'public': event[7],
+             'author': event[8] })
         return evs
 
     def getEvent(self, event_id):
@@ -143,7 +146,7 @@ class EventDB(object):
         """
         msg = '''SELECT origin_time, origin_latitude,
                   origin_longitude, origin_depth, magnitude, magnitude_type,
-                  event_type
+                  event_type, evaluation_mode, public, author
                   FROM events WHERE event_id = "%s"''' % event_id
         self.c.execute(msg)
         self.db.commit()
@@ -158,7 +161,8 @@ class EventDB(object):
         return {'time': UTCDateTime(event[0]), 'latitude': float(event[1]),
                 'longitude': float(event[2]), 'depth': float(event[3]),
                 'magnitude': magnitude, 'magnitude_type': event[5],
-                'event_type': event[6]}
+                'event_type': event[6], 'evaluation_mode': event[7],
+                'public': event[8], 'author': event[9]}
 
     def getFilesAndModification(self):
         """
@@ -231,8 +235,9 @@ class EventDB(object):
         # optional tags.
         # XXX: Better way than try/except?
         event_dict['event_type'] = event.event_type
+        event_dict['evaluation_mode'] = event.extra.evaluationMode["value"]
         try:
-            event_dict['user'] = event.creation_info.author
+            event_dict['author'] = event.creation_info.author
         except:
             pass
         try:
@@ -263,7 +268,7 @@ class EventDB(object):
             pass
         try:
             event_dict['origin_longitude_uncertainty'] = \
-                origin.longitude.uncertainty
+                origin.longitude_errors.uncertainty
         except:
             pass
         try:
@@ -335,7 +340,7 @@ class EventDB(object):
                 pick_dict['channel'] = '*'
 
             try:
-                pick_dict['time'] = p.time
+                pick_dict['time'] = str(p.time)
             except:
                 print 'Problem with parsing the pick time in event %s' % event_id
                 print '\tNot all picks for the event will be displayed.'
@@ -416,7 +421,8 @@ class EventDB(object):
             event_file_last_modified TEXT,
             event_id TEXT,
             event_type TEXT,
-            user TEXT,
+            evaluation_mode TEXT,
+            author TEXT,
             public TEXT,
             origin_time TEXT,
             origin_time_uncertainty REAL,

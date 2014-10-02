@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from PyQt4 import QtGui
+from numpy import nan
 
 from obspy.core import UTCDateTime
 from utils import MONTHS
@@ -289,7 +290,7 @@ class TimeScale(QtGui.QGraphicsItemGroup):
             ev = QtGui.QGraphicsEllipseItem(frac * self.width - size / 2, start_y + offset, size, size)
             ev.fraction = frac
             ev.event_size = size
-            if event['event_type'] == 'manual':
+            if event['evaluation_mode'] == 'manual':
                 ev.setBrush(self.event_color_manual)
                 ev.setPen(self.event_color_manual_dark)
                 ev.setZValue(50)
@@ -297,8 +298,9 @@ class TimeScale(QtGui.QGraphicsItemGroup):
                 ev.setBrush(self.event_color_automatic)
                 ev.setPen(self.event_color_automatic_dark)
                 ev.setZValue(40)
-            ev.setToolTip('Event: %s\nMagnitude: %s (%s)\n%s\nLat: %s, Lon: %s' \
-                  % (event['event_id'], event['magnitude'], event['event_type'],
+            ev.setToolTip('Event: %s\nAuthor: %s\nPublic: %s\nMagnitude: %.1f\n%s\nLat: %s, Lon: %s' \
+                  % (event['event_id'], event['author'], event['public'],
+                     event['magnitude'] or nan,
                      event['origin_time'], event['origin_latitude'],
                      event['origin_longitude']))
             self.addToGroup(ev)
