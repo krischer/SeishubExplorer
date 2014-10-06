@@ -250,10 +250,10 @@ class TreeModel(QtCore.QAbstractItemModel):
                     channels = st_dict[location][0]
                     for channel in channels:
                         if len(location):
-                            st_child.appendChild(TreeItem((location + '.'\
-                                        + channel), 'channel', st_child))
+                            st_child.appendChild(TreeItem(str((location + '.'\
+                                        + channel)), 'channel', st_child))
                         else:
-                            st_child.appendChild(TreeItem((channel), 'channel',
+                            st_child.appendChild(TreeItem(str(channel), 'channel',
                                                                      st_child))
                         # Connect to signal.
                         ch_signal = st_child.child(st_child.childCount() - 1)
